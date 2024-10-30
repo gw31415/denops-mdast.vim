@@ -1,11 +1,8 @@
-import type {
-	Nodes,
-	Root,
-} from "https://esm.sh/v135/@types/mdast@4.0.4/index.d.ts";
-import type { Position } from "https://esm.sh/v135/@types/unist@3.0.2/index.d.ts";
-import remarkGfm from "remark-gfm";
-import remarkParse from "remark-parse";
-import { unified } from "unified";
+import type { Nodes, Root } from "npm:mdast";
+import remarkGfm from "npm:remark-gfm";
+import remarkParse from "npm:remark-parse";
+import { unified } from "npm:unified";
+import type { Position } from "npm:unist";
 
 /** カーソルの位置 */
 export interface Cursor {
@@ -57,7 +54,9 @@ function testCursor(cursor: Cursor, position: Position): -1 | 0 | 1 {
 	if (cursor.line < position.start.line) {
 		return -1;
 	}
-	if (cursor.line >= position.start.line && cursor.line <= position.end.line) {
+	if (
+		cursor.line >= position.start.line && cursor.line <= position.end.line
+	) {
 		if (
 			cursor.line === position.start.line &&
 			cursor.column < position.start.column

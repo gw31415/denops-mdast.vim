@@ -1,9 +1,9 @@
 import jq from "npm:jq-web-wasm";
+import remarkGfm from "npm:remark-gfm";
+import remarkParse from "npm:remark-parse";
+import { unified } from "npm:unified";
 import { assert, isArrayOf, isNumber, isString } from "jsr:@core/unknownutil";
 import type { Denops } from "jsr:@denops/std";
-import remarkGfm from "remark-gfm";
-import remarkParse from "remark-parse";
-import { unified } from "unified";
 import { createMarkdownEditorState, EditorStateFields } from "./markdown.ts";
 import type { MarkdownEditorState } from "./markdown.ts";
 
@@ -31,13 +31,17 @@ export function main(denops: Denops) {
 
 			return Object.assign(
 				{},
-				...fields.map((field) => ({ [field]: state[field] })),
+				...fields.map((field) => ({
+					[field]: state[field],
+				})),
 			);
 		},
 		mdastQuery(markdown, jquery) {
 			assert(markdown, isString);
 			assert(jquery, isString);
-			const ast = unified().use(remarkGfm).use(remarkParse).parse(markdown);
+			const ast = unified().use(remarkGfm).use(remarkParse).parse(
+				markdown,
+			);
 			return jq(ast, jq);
 		},
 	};
