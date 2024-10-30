@@ -1,4 +1,4 @@
-import jq from "npm:jq-web-wasm";
+import jq from "npm:jq-web-wasm/jq.wasm";
 import remarkGfm from "npm:remark-gfm";
 import remarkParse from "npm:remark-parse";
 import { unified } from "npm:unified";
@@ -39,10 +39,8 @@ export function main(denops: Denops) {
 		mdastQuery(markdown, jquery) {
 			assert(markdown, isString);
 			assert(jquery, isString);
-			const ast = unified().use(remarkGfm).use(remarkParse).parse(
-				markdown,
-			);
-			return jq(ast, jq);
+			const ast = unified().use(remarkGfm).use(remarkParse).parse(markdown);
+			return jq.json(ast, jquery);
 		},
 	};
 }

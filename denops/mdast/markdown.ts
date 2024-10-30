@@ -54,9 +54,7 @@ function testCursor(cursor: Cursor, position: Position): -1 | 0 | 1 {
 	if (cursor.line < position.start.line) {
 		return -1;
 	}
-	if (
-		cursor.line >= position.start.line && cursor.line <= position.end.line
-	) {
+	if (cursor.line >= position.start.line && cursor.line <= position.end.line) {
 		if (
 			cursor.line === position.start.line &&
 			cursor.column < position.start.column
