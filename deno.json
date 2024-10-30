@@ -1,0 +1,15 @@
+{
+	"$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
+	"fmt": {
+		"indentWidth": 2,
+		"semiColons": true,
+		"singleQuote": false,
+		"useTabs": false
+	},
+	"imports": {
+		"remark-gfm": "https://esm.sh/remark-gfm@4.0.0",
+		"unified": "https://esm.sh/unified@11.0.4",
+		"remark-parse": "https://esm.sh/remark-parse@11.0.0",
+		"@types/mdast": "https://esm.sh/@types/mdast@4.0.4/index.d.ts"
+	}
+}
