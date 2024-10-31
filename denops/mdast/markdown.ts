@@ -29,7 +29,7 @@ export interface MarkdownEditorState {
 	/** 現在のカーソル位置のノード */
 	get includingNode(): Nodes;
 	/** ヘッダーのレベルを取得 */
-	get headerLevel(): number;
+	get headingLevel(): number;
 	/** ノードのタイプを取得 */
 	get nodeType(): string;
 	/** アドレスをインクリメント */
@@ -46,7 +46,7 @@ export const EditorStateFields = [
 	"includingNodeAddress",
 	"neighboringNodeAddress",
 	"includingNode",
-	"headerLevel",
+	"headingLevel",
 	"nodeType",
 ] as const;
 
@@ -106,22 +106,30 @@ class _EditorState implements MarkdownEditorState {
 		}
 		return [...addr, address[addr.length] + 1];
 	}
+
 	decrementAddress(address: number[]): number[] | undefined {
-		let addr = [...address];
-		while (addr[addr.length - 1] === 0) {
-			if (this.getNode(addr)?.type === "root") {
-				// root node has no parent
-				return undefined;
-			}
-			addr = addr.slice(0, -1);
+		// アドレスが空ならルート
+		if (address.length === 0) return undefined;
+
+		const lastAddressIndex = address[address.length - 1];
+		const parentAddr = address.slice(0, -1);
+
+		// もし自身が長男だったら
+		if (lastAddressIndex === 0) {
+			return parentAddr;
 		}
-		addr[addr.length - 1] -= 1;
+		// 最後が0でない場合
+		let addr = parentAddr.concat(lastAddressIndex - 1);
 		let node = this.getNode(addr)!;
-		while ("children" in node) {
-			addr.push(node.children.length - 1);
-			node = node.children[node.children.length - 1];
+
+		for (;;) {
+			if (!("children" in node) || node.children.length === 0) {
+				return addr;
+			}
+			const lastChildIndex = node.children.length - 1;
+			addr = addr.concat(lastChildIndex);
+			node = this.getNode(addr)!;
 		}
-		return addr;
 	}
 	get includingNodeAddress() {
 		let lastInsideAddr: number[] = [];
@@ -161,13 +169,12 @@ class _EditorState implements MarkdownEditorState {
 	get includingNode() {
 		return this.getNode(this.includingNodeAddress)!;
 	}
-	get headerLevel() {
+	get headingLevel() {
 		let addr: number[] | undefined = this.includingNodeAddress;
 		let node = this.getNode(addr)!;
 		while (node.type !== "heading") {
 			addr = this.decrementAddress(addr);
 			if (!addr) return 0;
-
 			node = this.getNode(addr)!;
 		}
 		return node.depth;
