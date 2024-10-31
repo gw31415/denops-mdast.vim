@@ -25,7 +25,8 @@ function mdast#edit#toggle_heading() abort
 	let lnum = line('.')
 	let col = col('.')
 
-	let includingNode = denops#request('mdast', 'editorState', [md, lnum, col, ['includingNode']]).includingNode
+	let res = denops#request('mdast', 'editorState', [md, lnum, col, ['includingNode', 'headingLevel']])
+	let includingNode = res.includingNode
 	if has_key(includingNode, 'type') && includingNode.type == 'heading'
 		" 削除範囲 [start, end] を取得
 		let start = includingNode.position.start
@@ -44,7 +45,7 @@ function mdast#edit#toggle_heading() abort
 
 		call s:delete_range(start, end)
 	else
-		let level = denops#request('mdast', 'editorState', [md, lnum, col, ['headingLevel']]).headingLevel
+		let level = res.headingLevel
 		let l = getline('.')
 		call setline(lnum, repeat('#', level == 0 ? 1 : level) . ' ' . l)
 	endif
