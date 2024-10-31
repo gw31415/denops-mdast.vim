@@ -1,7 +1,10 @@
-import type { Nodes, Root } from "npm:mdast";
+//@deno-types="npm:@types/mdast"
+import type { Heading, Nodes, Root } from "npm:mdast";
 import remarkGfm from "npm:remark-gfm";
 import remarkParse from "npm:remark-parse";
+//@deno-types="npm:unified"
 import { unified } from "npm:unified";
+//@deno-types="npm:@types/unist"
 import type { Position } from "npm:unist";
 
 /** カーソルの位置 */
@@ -28,6 +31,18 @@ export interface MarkdownEditorState {
 	};
 	/** 現在のカーソル位置のノード */
 	get includingNode(): Nodes;
+	/** 所属する見出しノード */
+	get leaderHeading(): Heading | undefined;
+	/** 所属する見出しノードのアドレス */
+	get leaderHeadingAddress(): number[] | undefined;
+	/** 次の見出しノード */
+	get nextHeading(): Heading | undefined;
+	/** 前の見出しノード */
+	get previousHeading(): Heading | undefined;
+	/** 現在の見出しに含まれる小さい見出しのリスト */
+	get subHeadings(): Heading[];
+	/** 現在の見出しに含まれる範囲 */
+	get headingRange(): { start: Cursor; end: Cursor };
 	/** ヘッダーのレベルを取得 */
 	get headingLevel(): number;
 	/** ノードのタイプを取得 */
@@ -46,6 +61,12 @@ export const EditorStateFields = [
 	"includingNodeAddress",
 	"neighboringNodeAddress",
 	"includingNode",
+	"leaderHeading",
+	"leaderHeadingAddress",
+	"nextHeading",
+	"previousHeading",
+	"subHeadings",
+	"headingRange",
 	"headingLevel",
 	"nodeType",
 ] as const;
@@ -169,15 +190,128 @@ class _EditorState implements MarkdownEditorState {
 	get includingNode() {
 		return this.getNode(this.includingNodeAddress)!;
 	}
-	get headingLevel() {
+	get leaderHeading() {
+		const addr = this.leaderHeadingAddress;
+		if (!addr) return undefined;
+		return this.getNode(addr) as Heading;
+	}
+	get leaderHeadingAddress() {
 		let addr: number[] | undefined = this.includingNodeAddress;
 		let node = this.getNode(addr)!;
 		while (node.type !== "heading") {
 			addr = this.decrementAddress(addr);
-			if (!addr) return 0;
+			if (!addr) return undefined;
 			node = this.getNode(addr)!;
 		}
-		return node.depth;
+		return addr;
+	}
+	get nextHeading() {
+		let addr: number[] | undefined = this.incrementAddress(
+			this.includingNodeAddress,
+		)!;
+		for (;;) {
+			const node = this.getNode(addr)!;
+			if (node.type === "heading") {
+				return node;
+			}
+			addr = this.incrementAddress(addr);
+			if (!addr) return undefined;
+		}
+	}
+	get previousHeading() {
+		let addr: number[] | undefined = this.decrementAddress(
+			this.includingNodeAddress,
+		)!;
+		for (;;) {
+			const node = this.getNode(addr)!;
+			if (node.type === "heading") {
+				return node;
+			}
+			addr = this.decrementAddress(addr);
+			if (!addr) return undefined;
+		}
+	}
+	get subHeadings() {
+		const leader = this.leaderHeading;
+		const headings: Heading[] = [];
+
+		if (!leader) {
+			// All headings
+			let addr: number[] | undefined = [];
+			for (;;) {
+				const node = this.getNode(addr)!;
+				if (node.type === "heading") {
+					headings.push(node);
+				}
+				addr = this.incrementAddress(addr);
+				if (!addr) return headings;
+			}
+		}
+
+		const leaderDepth = leader.depth;
+		let addr: number[] | undefined = this.incrementAddress(
+			this.leaderHeadingAddress!, // leaderHeadingAddress is not undefined because leader exists
+		)!;
+		for (;;) {
+			const node = this.getNode(addr)!;
+			if (node.type === "heading") {
+				if (node.depth > leaderDepth) {
+					break;
+				}
+				headings.push(node);
+			}
+			addr = this.incrementAddress(addr);
+			if (!addr) break;
+		}
+		return headings;
+	}
+	get headingRange() {
+		const leader = this.leaderHeading;
+		if (!leader) {
+			return this._ast.position!;
+		}
+		let start = null;
+		let addr: number[] | undefined = this.leaderHeadingAddress;
+		for (;;) {
+			addr = this.incrementAddress(addr!);
+			if (!addr) {
+				return {
+					start: this._ast.position!.end,
+					end: this._ast.position!.end,
+				};
+			}
+			const node = this.getNode(addr)!;
+			if (node.position) {
+				start = node.position.start;
+				break;
+			}
+		}
+		let end = null;
+		let lastPositionedAddr = null;
+		for (;;) {
+			addr = this.incrementAddress(addr!);
+			if (!addr) {
+				return { start, end: this._ast.position!.end };
+			}
+			const node = this.getNode(addr)!;
+			if (node.type === "heading") {
+				if (lastPositionedAddr) {
+					end = this.getNode(lastPositionedAddr)!.position!.end;
+				} else {
+					end = start;
+				}
+				break;
+			}
+			if (node.position) {
+				lastPositionedAddr = addr;
+			}
+		}
+		return { start, end };
+	}
+	get headingLevel() {
+		const heading = this.leaderHeading;
+		if (!heading) return 0;
+		return heading.depth;
 	}
 	get nodeType() {
 		return this.includingNode.type;
