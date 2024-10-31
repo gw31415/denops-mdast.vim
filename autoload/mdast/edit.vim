@@ -1,4 +1,4 @@
-" start から end までの範囲を削除
+" start から end まで (end含む) の範囲を削除
 function s:delete_range(start, end) abort
 	let start = a:start
 	let end = a:end
