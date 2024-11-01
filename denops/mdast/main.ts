@@ -26,7 +26,13 @@ export function main(denops: Denops) {
 			}
 			const all = new Set([...fields, ...EditorStateFields]);
 			if (all.size !== EditorStateFields.length) {
-				throw new Error("fields must be a subset of MetadataFields");
+				const diffs = all.difference(new Set(EditorStateFields))
+					.values().toArray();
+				throw new Error(
+					`fields must be one of [${
+						EditorStateFields.join(", ")
+					}], but ${diffs.join(", ")} found`,
+				);
 			}
 
 			return Object.assign(

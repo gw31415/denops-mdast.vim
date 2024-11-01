@@ -25,7 +25,7 @@ function mdast#edit#disable_heading(lnum = v:null, col = v:null) abort
 	let lnum = a:lnum ? a:lnum : line('.')
 	let col = a:col ? a:col : a:lnum ? 0 : col('.')
 
-	let res = denops#request('mdast', 'editorState', [md, lnum, col, ['includingNode', 'headingLevel']])
+	let res = denops#request('mdast', 'editorState', [md, lnum, col, ['includingNode', 'headingDepth']])
 	let includingNode = res.includingNode
 	if has_key(includingNode, 'type') && includingNode.type == 'heading'
 		" 削除範囲 [start, end] を取得
@@ -52,13 +52,13 @@ function mdast#edit#enable_heading(lnum = v:null, col = v:null) abort
 	let lnum = a:lnum ? a:lnum : line('.')
 	let col = a:col ? a:col : a:lnum ? 0 : col('.')
 
-	let res = denops#request('mdast', 'editorState', [md, lnum, col, ['includingNode', 'headingLevel']])
+	let res = denops#request('mdast', 'editorState', [md, lnum, col, ['includingNode', 'headingDepth']])
 	let includingNode = res.includingNode
 
 	if !(has_key(includingNode, 'type') && includingNode.type == 'heading')
-		let level = res.headingLevel
+		let depth = res.headingDepth
 		let l = getline(lnum)
-		call setline(lnum, repeat('#', level == 0 ? 1 : level) . ' ' . l)
+		call setline(lnum, repeat('#', depth == 0 ? 1 : depth) . ' ' . l)
 	endif
 endfunction
 
@@ -67,7 +67,7 @@ function mdast#edit#toggle_heading(lnum = v:null, col = v:null) abort
 	let lnum = a:lnum ? a:lnum : line('.')
 	let col = a:col ? a:col : a:lnum ? 0 : col('.')
 
-	let res = denops#request('mdast', 'editorState', [md, lnum, col, ['includingNode', 'headingLevel']])
+	let res = denops#request('mdast', 'editorState', [md, lnum, col, ['includingNode', 'headingDepth']])
 	let includingNode = res.includingNode
 
 	if has_key(includingNode, 'type') && includingNode.type == 'heading'
@@ -85,15 +85,21 @@ function mdast#edit#increment_heading(lnum = v:null, col = v:null) abort
 	let res = denops#request('mdast', 'editorState', [md, lnum, col, ['leaderHeading']])
 	let leaderHeading = res.leaderHeading
 
-	let level = leaderHeading.level
-	if level == 0
+	if type(leaderHeading) != v:t_dict
 		throw 'No heading found'
-	elseif level >= 6
-		throw 'Heading level is too high'
+	endif
+	let depth = leaderHeading.depth
+	if depth == 0
+		throw 'No heading found'
+	elseif depth >= 6
+		throw 'Heading depth is too high'
 	else
+		let lnum = leaderHeading.position.start.line
+		let col = leaderHeading.position.start.column
+
 		call mdast#edit#disable_heading(lnum, col)
 		let l = getline(lnum)
-		call setline(lnum, repeat('#', level + 1) . ' ' . l)
+		call setline(lnum, repeat('#', depth + 1) . ' ' . l)
 	endif
 endfunction
 
@@ -105,12 +111,18 @@ function mdast#edit#decrement_heading(lnum = v:null, col = v:null) abort
 	let res = denops#request('mdast', 'editorState', [md, lnum, col, ['leaderHeading']])
 	let leaderHeading = res.leaderHeading
 
-	let level = leaderHeading.level
-	if level <= 1
-		throw 'Heading level is too low'
+	if type(leaderHeading) != v:t_dict
+		throw 'No heading found'
+	endif
+	let depth = leaderHeading.depth
+	if depth <= 1
+		throw 'Heading depth is too low'
 	else
+		let lnum = leaderHeading.position.start.line
+		let col = leaderHeading.position.start.column
+
 		call mdast#edit#disable_heading(lnum, col)
 		let l = getline(lnum)
-		call setline(lnum, repeat('#', level - 1) . ' ' . l)
+		call setline(lnum, repeat('#', depth - 1) . ' ' . l)
 	endif
 endfunction

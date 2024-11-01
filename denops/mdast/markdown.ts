@@ -42,8 +42,8 @@ export interface MarkdownEditorState {
 	get subHeadings(): Heading[];
 	/** 現在の見出しに含まれる範囲 */
 	get headingRange(): { start: Cursor; end: Cursor };
-	/** ヘッダーのレベルを取得 */
-	get headingLevel(): number;
+	/** ヘッダー的な深さを取得 */
+	get headingDepth(): number;
 	/** ノードのタイプを取得 */
 	get nodeType(): string;
 	/** アドレスをインクリメント */
@@ -66,7 +66,7 @@ export const EditorStateFields = [
 	"previousHeading",
 	"subHeadings",
 	"headingRange",
-	"headingLevel",
+	"headingDepth",
 	"nodeType",
 ] as const;
 
@@ -199,6 +199,16 @@ class _EditorState implements MarkdownEditorState {
 	get leaderHeadingAddress() {
 		let addr: number[] | undefined = this.includingNodeAddress;
 		let node = this.getNode(addr)!;
+
+		// ヘッダーの場合はそのまま返す
+		if (node.type === "heading") {
+			return addr;
+		}
+
+		// 行的に前のノードから探す
+		addr = this.neighboringNodeAddress.previous;
+		if (!addr) return undefined;
+
 		while (node.type !== "heading") {
 			addr = this.decrementAddress(addr);
 			if (!addr) return undefined;
@@ -309,7 +319,7 @@ class _EditorState implements MarkdownEditorState {
 		}
 		return { start, end };
 	}
-	get headingLevel() {
+	get headingDepth() {
 		const heading = this.leaderHeading;
 		if (!heading) return 0;
 		return heading.depth;
