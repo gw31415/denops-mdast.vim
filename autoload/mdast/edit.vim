@@ -20,6 +20,7 @@ function s:delete_range(start, end) abort
 	call setline(start.line, l)
 endfunction
 
+" ヘッダを無効化
 function mdast#edit#disable_heading(lnum = v:null, col = v:null) abort
 	let md = join(getline(1, '$'), "\n")
 	let lnum = a:lnum ? a:lnum : line('.')
@@ -47,6 +48,7 @@ function mdast#edit#disable_heading(lnum = v:null, col = v:null) abort
 	endif
 endfunction
 
+" ヘッダを有効化
 function mdast#edit#enable_heading(lnum = v:null, col = v:null) abort
 	let md = join(getline(1, '$'), "\n")
 	let lnum = a:lnum ? a:lnum : line('.')
@@ -62,6 +64,7 @@ function mdast#edit#enable_heading(lnum = v:null, col = v:null) abort
 	endif
 endfunction
 
+" カーソル位置のヘッダの切り替え
 function mdast#edit#toggle_heading(lnum = v:null, col = v:null) abort
 	let md = join(getline(1, '$'), "\n")
 	let lnum = a:lnum ? a:lnum : line('.')
@@ -77,6 +80,7 @@ function mdast#edit#toggle_heading(lnum = v:null, col = v:null) abort
 	endif
 endfunction
 
+" 対応するヘッダの深さを1つ増やす
 function mdast#edit#increment_heading(lnum = v:null, col = v:null) abort
 	let md = join(getline(1, '$'), "\n")
 	let lnum = a:lnum ? a:lnum : line('.')
@@ -103,6 +107,7 @@ function mdast#edit#increment_heading(lnum = v:null, col = v:null) abort
 	endif
 endfunction
 
+" 対応するヘッダの深さを1つ減らす
 function mdast#edit#decrement_heading(lnum = v:null, col = v:null) abort
 	let md = join(getline(1, '$'), "\n")
 	let lnum = a:lnum ? a:lnum : line('.')
