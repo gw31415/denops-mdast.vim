@@ -19,7 +19,6 @@ export interface Cursor {
 export interface MarkdownEditorState {
 	/** 現在のカーソル位置 */
 	get cursor(): Cursor;
-	set cursor(cursor: Cursor);
 	/** MarkdownのAST */
 	get ast(): Root;
 	/** カーソルを含むノードのアドレス */
