@@ -46,7 +46,7 @@ function mdast#edit#toggle_heading(lnum = v:null, col = v:null) abort
 		call s:delete_range(start, end)
 	else
 		let level = res.headingLevel
-		let l = getline('.')
+		let l = getline(lnum)
 		call setline(lnum, repeat('#', level == 0 ? 1 : level) . ' ' . l)
 	endif
 endfunction
