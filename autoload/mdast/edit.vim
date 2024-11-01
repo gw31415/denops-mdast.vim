@@ -20,10 +20,10 @@ function s:delete_range(start, end) abort
 	call setline(start.line, l)
 endfunction
 
-function mdast#edit#toggle_heading() abort
+function mdast#edit#toggle_heading(lnum = v:null, col = v:null) abort
 	let md = join(getline(1, '$'), "\n")
-	let lnum = line('.')
-	let col = col('.')
+	let lnum = a:lnum ? a:lnum : line('.')
+	let col = a:col ? a:col : a:lnum ? 0 : col('.')
 
 	let res = denops#request('mdast', 'editorState', [md, lnum, col, ['includingNode', 'headingLevel']])
 	let includingNode = res.includingNode
