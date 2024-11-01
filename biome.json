@@ -4,7 +4,12 @@
 		"enabled": true
 	},
 	"files": {
-		"ignore": ["migrations"]
+		"ignore": [
+			"migrations"
+		]
+	},
+	"formatter": {
+		"enabled": false
 	},
 	"linter": {
 		"enabled": true,

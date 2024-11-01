@@ -1,9 +1,9 @@
 {
 	"$schema": "https://deno.land/x/deno/cli/schemas/config-file.v1.json",
 	"fmt": {
-		"indentWidth": 2,
+		"indentWidth": 4,
 		"semiColons": true,
 		"singleQuote": false,
-		"useTabs": false
+		"useTabs": true
 	}
 }

@@ -39,7 +39,9 @@ export function main(denops: Denops) {
 		mdastQuery(markdown, jquery) {
 			assert(markdown, isString);
 			assert(jquery, isString);
-			const ast = unified().use(remarkGfm).use(remarkParse).parse(markdown);
+			const ast = unified().use(remarkGfm).use(remarkParse).parse(
+				markdown,
+			);
 			return jq.json(ast, jquery);
 		},
 	};
