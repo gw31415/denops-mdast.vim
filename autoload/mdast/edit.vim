@@ -20,7 +20,7 @@ function s:delete_range(start, end) abort
 	call setline(start.line, l)
 endfunction
 
-function mdast#edit#toggle_heading(lnum = v:null, col = v:null) abort
+function mdast#edit#disable_heading(lnum = v:null, col = v:null) abort
 	let md = join(getline(1, '$'), "\n")
 	let lnum = a:lnum ? a:lnum : line('.')
 	let col = a:col ? a:col : a:lnum ? 0 : col('.')
@@ -44,9 +44,73 @@ function mdast#edit#toggle_heading(lnum = v:null, col = v:null) abort
 		endfor
 
 		call s:delete_range(start, end)
-	else
+	endif
+endfunction
+
+function mdast#edit#enable_heading(lnum = v:null, col = v:null) abort
+	let md = join(getline(1, '$'), "\n")
+	let lnum = a:lnum ? a:lnum : line('.')
+	let col = a:col ? a:col : a:lnum ? 0 : col('.')
+
+	let res = denops#request('mdast', 'editorState', [md, lnum, col, ['includingNode', 'headingLevel']])
+	let includingNode = res.includingNode
+
+	if !(has_key(includingNode, 'type') && includingNode.type == 'heading')
 		let level = res.headingLevel
 		let l = getline(lnum)
 		call setline(lnum, repeat('#', level == 0 ? 1 : level) . ' ' . l)
+	endif
+endfunction
+
+function mdast#edit#toggle_heading(lnum = v:null, col = v:null) abort
+	let md = join(getline(1, '$'), "\n")
+	let lnum = a:lnum ? a:lnum : line('.')
+	let col = a:col ? a:col : a:lnum ? 0 : col('.')
+
+	let res = denops#request('mdast', 'editorState', [md, lnum, col, ['includingNode', 'headingLevel']])
+	let includingNode = res.includingNode
+
+	if has_key(includingNode, 'type') && includingNode.type == 'heading'
+		call mdast#edit#disable_heading(lnum, col)
+	else
+		call mdast#edit#enable_heading(lnum, col)
+	endif
+endfunction
+
+function mdast#edit#increment_heading(lnum = v:null, col = v:null) abort
+	let md = join(getline(1, '$'), "\n")
+	let lnum = a:lnum ? a:lnum : line('.')
+	let col = a:col ? a:col : a:lnum ? 0 : col('.')
+
+	let res = denops#request('mdast', 'editorState', [md, lnum, col, ['leaderHeading']])
+	let leaderHeading = res.leaderHeading
+
+	let level = leaderHeading.level
+	if level == 0
+		throw 'No heading found'
+	elseif level >= 6
+		throw 'Heading level is too high'
+	else
+		call mdast#edit#disable_heading(lnum, col)
+		let l = getline(lnum)
+		call setline(lnum, repeat('#', level + 1) . ' ' . l)
+	endif
+endfunction
+
+function mdast#edit#decrement_heading(lnum = v:null, col = v:null) abort
+	let md = join(getline(1, '$'), "\n")
+	let lnum = a:lnum ? a:lnum : line('.')
+	let col = a:col ? a:col : a:lnum ? 0 : col('.')
+
+	let res = denops#request('mdast', 'editorState', [md, lnum, col, ['leaderHeading']])
+	let leaderHeading = res.leaderHeading
+
+	let level = leaderHeading.level
+	if level <= 1
+		throw 'Heading level is too low'
+	else
+		call mdast#edit#disable_heading(lnum, col)
+		let l = getline(lnum)
+		call setline(lnum, repeat('#', level - 1) . ' ' . l)
 	endif
 endfunction
